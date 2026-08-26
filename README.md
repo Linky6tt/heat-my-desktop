@@ -49,7 +49,7 @@ You can easily install this utility natively using Arch's package builder:
 
 1. Clone the repository:
 ```bash
-git clone git clone https://github.com/Linky6tt/heat-my-desktop.git
+git clone https://github.com/Linky6tt/heat-my-desktop.git
 ```
 2. Navigate to the directory and build the package:
 ```bash
