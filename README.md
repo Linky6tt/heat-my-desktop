@@ -46,8 +46,13 @@ Heat My Desktop also allows you to run as a daemon on startup automatically.
 *(Note: Direct AUR installation is temporarily unavailable until the Arch team lifts the registration freeze).*
 
 You can easily install this utility natively using Arch's package builder:
+
+1. Clone the repository:
 ```bash
-git clone [https://github.com/Linky6tt/heat-my-desktop.git](https://github.com/Linky6tt/heat-my-desktop.git)
+git clone git clone https://github.com/Linky6tt/heat-my-desktop.git
+```
+2. Navigate to the directory and build the package:
+```bash
 cd heat-my-desktop
 makepkg -si
 ```
@@ -58,7 +63,7 @@ Make sure python3, pyqt6, and lm-sensors are installed on your Linux distributio
 - **Ubuntu / Debian / Linux Mint**:
   ```bash
   sudo apt install python3 python3-pyqt6 lm-sensors
-
+  ```
 - **Fedora**:
   ```bash
   sudo dnf install python3 python3-pyqt6 lm_sensors
