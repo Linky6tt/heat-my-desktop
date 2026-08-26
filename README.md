@@ -40,14 +40,16 @@ Heat My Desktop also allows you to run as a daemon on startup automatically.
 
 ## How to install and use
 
-### Installation
+## Installation
 
-#### AUR (Arch Linux / Manjaro)
-You can install directly from the AUR using yay or paru:
+**Arch Linux / Manjaro (Recommended)**
+*(Note: Direct AUR installation is temporarily unavailable until the Arch team lifts the registration freeze).*
+
+You can easily install this utility natively using Arch's package builder:
 ```bash
-yay -S heat-my-desktop
-# or
-paru -S heat-my-desktop
+git clone [https://github.com/Linky6tt/heat-my-desktop.git](https://github.com/Linky6tt/heat-my-desktop.git)
+cd heat-my-desktop
+makepkg -si
 ```
 
 #### Manual Installation / Prerequisites
@@ -56,21 +58,23 @@ Make sure python3, pyqt6, and lm-sensors are installed on your Linux distributio
 - **Ubuntu / Debian / Linux Mint**:
   ```bash
   sudo apt install python3 python3-pyqt6 lm-sensors
-  ```
-- **Arch Linux / Manjaro**:
-  ```bash
-  sudo pacman -S python python-pyqt6 lm_sensors
-  ```
+
 - **Fedora**:
   ```bash
   sudo dnf install python3 python3-pyqt6 lm_sensors
   ```
 
+Once the prerequisites are installed, clone the repository and run the script manually:
+```
+git clone [https://github.com/Linky6tt/heat-my-desktop.git](https://github.com/Linky6tt/heat-my-desktop.git)
+cd heat-my-desktop
+python3 main.py
+```
 ---
 
 ### 1. Launching the GUI Widget
 
-- **From Application Launcher**: Search for **Heat My Desktop** or **HMD** in your GNOME / KDE search bar.
+- **From Application Launcher**: Search for **Heat My Desktop** or **HMD** in your GNOME / KDE / OTHER search bar.
 - **From Terminal**:
   ```bash
   python3 main.py
