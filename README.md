@@ -71,7 +71,7 @@ Make sure python3, pyqt6, and lm-sensors are installed on your Linux distributio
 
 Once the prerequisites are installed, clone the repository and run the script manually:
 ```
-git clone [https://github.com/Linky6tt/heat-my-desktop.git](https://github.com/Linky6tt/heat-my-desktop.git)
+git clone https://github.com/Linky6tt/heat-my-desktop.git
 cd heat-my-desktop
 python3 main.py
 ```
