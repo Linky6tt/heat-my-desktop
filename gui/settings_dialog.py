@@ -28,6 +28,7 @@ from service.systemd import (
     generate_service_content,
     get_service_status,
     install_user_service,
+    is_service_enabled,
     is_service_installed,
     uninstall_user_service,
 )
@@ -163,15 +164,10 @@ class SettingsDialog(QDialog):
         self.install_btn.clicked.connect(self._handle_install_service)
         sys_btn_layout.addWidget(self.install_btn)
 
-        self.enable_btn = QPushButton("Enable on Boot", sys_card)
-        self.enable_btn.setProperty("class", "SecondaryButton")
-        self.enable_btn.clicked.connect(self._handle_enable_service)
-        sys_btn_layout.addWidget(self.enable_btn)
-
-        self.disable_btn = QPushButton("Disable Service", sys_card)
-        self.disable_btn.setProperty("class", "SecondaryButton")
-        self.disable_btn.clicked.connect(self._handle_disable_service)
-        sys_btn_layout.addWidget(self.disable_btn)
+        self.toggle_boot_btn = QPushButton("Enable on Boot", sys_card)
+        self.toggle_boot_btn.setProperty("class", "SecondaryButton")
+        self.toggle_boot_btn.clicked.connect(self._handle_toggle_boot)
+        sys_btn_layout.addWidget(self.toggle_boot_btn)
 
         sys_layout.addLayout(sys_btn_layout)
 
@@ -229,19 +225,29 @@ class SettingsDialog(QDialog):
 
     def _refresh_service_status(self) -> None:
         installed = is_service_installed()
+        enabled = is_service_enabled()
+        
         if installed:
             self.install_btn.setText("Uninstall .service")
             self.install_btn.setStyleSheet(f"background-color: #5a2020; color: #ff9999; border: 1px solid #7a2828;")
+            self.toggle_boot_btn.setEnabled(True)
         else:
             self.install_btn.setText("Install .service")
             self.install_btn.setStyleSheet("")
+            self.toggle_boot_btn.setEnabled(False)
+
+        if enabled:
+            self.toggle_boot_btn.setText("Disable on Boot")
+        else:
+            self.toggle_boot_btn.setText("Enable on Boot")
 
         is_active, status_str = get_service_status()
+        boot_str = "Enabled" if enabled else "Disabled"
         if is_active:
-            self.service_status_lbl.setText(f"● Systemd Status: ACTIVE (running) | Installed: {'Yes' if installed else 'No'}")
+            self.service_status_lbl.setText(f"● Status: ACTIVE (running) | Boot: {boot_str} | Installed: {'Yes' if installed else 'No'}")
             self.service_status_lbl.setStyleSheet(f"color: {PALETTE['accent_green']}; font-size: 11px;")
         else:
-            self.service_status_lbl.setText(f"○ Systemd Status: {status_str or 'inactive'} | Installed: {'Yes' if installed else 'No'}")
+            self.service_status_lbl.setText(f"○ Status: {status_str or 'inactive'} | Boot: {boot_str} | Installed: {'Yes' if installed else 'No'}")
             self.service_status_lbl.setStyleSheet(f"color: {PALETTE['text_secondary']}; font-size: 11px;")
 
     def _handle_install_service(self) -> None:
@@ -268,22 +274,21 @@ class SettingsDialog(QDialog):
         except Exception as e:
             QMessageBox.critical(self, "Installation Error", f"Failed to install service: {e}")
 
-    def _handle_enable_service(self) -> None:
-        cfg = self._get_current_input_config()
-        install_user_service(cfg)
-        success, msg = enable_user_service()
-        if success:
-            QMessageBox.information(self, "Service Enabled", msg)
+    def _handle_toggle_boot(self) -> None:
+        if is_service_enabled():
+            success, msg = disable_user_service()
+            if success:
+                QMessageBox.information(self, "Service Disabled", "Service has been disabled from starting on boot.")
+            else:
+                QMessageBox.warning(self, "Disable Service Result", msg)
         else:
-            QMessageBox.warning(self, "Enable Service Result", msg)
-        self._refresh_service_status()
-
-    def _handle_disable_service(self) -> None:
-        success, msg = disable_user_service()
-        if success:
-            QMessageBox.information(self, "Service Disabled", msg)
-        else:
-            QMessageBox.warning(self, "Disable Service Result", msg)
+            cfg = self._get_current_input_config()
+            install_user_service(cfg)
+            success, msg = enable_user_service()
+            if success:
+                QMessageBox.information(self, "Service Enabled", "Service has been enabled to start on boot.")
+            else:
+                QMessageBox.warning(self, "Enable Service Result", msg)
         self._refresh_service_status()
 
     def _handle_save(self) -> None:

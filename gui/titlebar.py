@@ -54,14 +54,7 @@ class CustomTitleBar(QWidget):
 
         layout.addStretch()
 
-        # Extend / Compact button
-        self.extend_btn = QToolButton(self)
-        self.extend_btn.setObjectName("ExtendButton")
-        self.extend_btn.setProperty("class", "TitleButton")
-        self.extend_btn.setIcon(get_icon("extend", 14))
-        self.extend_btn.setToolTip("Toggle Compact / Expanded View")
-        self.extend_btn.clicked.connect(self._toggle_extend)
-        layout.addWidget(self.extend_btn)
+        # (Extend/Compact button removed as per user request to avoid confusion)
 
         # Minimize button
         self.min_btn = QToolButton(self)
@@ -81,11 +74,7 @@ class CustomTitleBar(QWidget):
         self.close_btn.clicked.connect(self.close_requested.emit)
         layout.addWidget(self.close_btn)
 
-    def _toggle_extend(self) -> None:
-        self._is_compact = not self._is_compact
-        icon_name = "collapse" if self._is_compact else "extend"
-        self.extend_btn.setIcon(get_icon(icon_name, 14))
-        self.extend_requested.emit()
+
 
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:

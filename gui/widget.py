@@ -246,7 +246,6 @@ class ThermalWidget(QWidget):
         self.title_bar = CustomTitleBar(self, title="CPU Thermal Controller")
         self.title_bar.close_requested.connect(self.close)
         self.title_bar.minimize_requested.connect(self.showMinimized)
-        self.title_bar.extend_requested.connect(self._toggle_compact)
         self.title_bar.settings_requested.connect(self._open_settings)
         container_layout.addWidget(self.title_bar)
 
@@ -515,10 +514,7 @@ class ThermalWidget(QWidget):
     def _on_maintain_toggled(self, checked: bool) -> None:
         self.config.maintain_after_warmup = checked
 
-    def _toggle_compact(self) -> None:
-        is_hidden = self.controls_card.isHidden()
-        self.controls_card.setVisible(is_hidden)
-        self.adjustSize()
+
 
     def _open_settings(self) -> None:
         dialog = SettingsDialog(

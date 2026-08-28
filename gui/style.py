@@ -118,7 +118,7 @@ QLabel {{
 
 QLabel.MutedLabel {{
     color: {PALETTE['text_secondary']};
-    font-size: 11px;
+    font-size: 10px;
 }}
 
 QLabel.ValueDisplay {{

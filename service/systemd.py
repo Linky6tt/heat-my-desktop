@@ -1,6 +1,6 @@
 """
 Systemd unit file generator and service manager for CPU Thermal Controller.
-Generates ~/.config/systemd/user/cpu-thermal-warmup.service for headless startup.
+Generates ~/.config/systemd/user/heat-my-desktop.service for headless startup.
 """
 
 from pathlib import Path
@@ -11,7 +11,7 @@ from typing import Optional, Tuple
 
 from thermal.config import ThermalConfig
 
-SERVICE_UNIT_NAME = "cpu-thermal-warmup.service"
+SERVICE_UNIT_NAME = "heat-my-desktop.service"
 
 
 def get_default_service_dir() -> Path:
@@ -194,3 +194,21 @@ def get_service_status() -> Tuple[bool, str]:
     except Exception as e:
         return False, str(e)
 
+
+def is_service_enabled() -> bool:
+    """
+    Checks if the user systemd service is enabled on boot.
+    """
+    if not shutil.which("systemctl"):
+        return False
+
+    try:
+        res = subprocess.run(
+            ["systemctl", "--user", "is-enabled", SERVICE_UNIT_NAME],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        return res.stdout.strip() == "enabled"
+    except Exception:
+        return False
