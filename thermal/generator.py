@@ -25,9 +25,22 @@ def _fpu_heat_worker() -> None:
     except Exception:
         pass
 
+    import random
     try:
         while True:
-            _ = 3.14159 ** 2.71828
+            # 1. FPU & Allocation: Create 2 million float objects (~70MB per worker)
+            data = [float(i) ** 0.5 for i in range(2_000_000)]
+            
+            # 2. Destroy Memory Locality: Shuffle the pointer array
+            random.shuffle(data)
+            
+            # 3. Pointer Chasing: Traverse shuffled pointers (Thrash L3 Cache & RAM)
+            # The hardware prefetcher cannot predict random memory addresses,
+            # forcing the Infinity Fabric and Memory Controller to work at max capacity.
+            _ = sum(data)
+            
+            # 4. Cleanup: Trigger Garbage Collection
+            del data
     except (KeyboardInterrupt, SystemExit):
         pass
 

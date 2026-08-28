@@ -613,7 +613,7 @@ class ThermalWidget(QWidget):
         # Status text update
         if status.state == EngineState.WARMUP:
             self.status_sublabel.setText(
-                f"Warming up • Target: {status.target_temp_c:.1f}°C (Exp: {status.expected_temp_c:.1f}°C)"
+                f"Warming up • Target: {status.target_temp_c:.1f}°C • Exp: {status.expected_temp_c:.1f}°C"
             )
             self.flame_badge.set_active(status.active_workers > 0)
         elif status.state == EngineState.MAINTAINING:
