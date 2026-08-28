@@ -212,7 +212,7 @@ class ThermalWidget(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setStyleSheet(MAIN_STYLESHEET)
         self.setWindowIcon(get_icon("flame", 64))
-        self.setMinimumWidth(380)
+        self.setMinimumWidth(420)
 
         # Polling timer for idle monitor readings
         self.idle_timer = QTimer(self)
