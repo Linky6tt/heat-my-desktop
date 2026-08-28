@@ -11,9 +11,13 @@ Heat My Desktop also allows you to run as a daemon on startup automatically.
 
 ---
 
+### ⚠️ Important Limitations and Hardware Behavior
+- **Laptop Thermal Throttling:** On most modern laptops (and thin-and-lights), firmware-level protections (like Intel DPTF or Arch's `thermald`) actively block you from increasing temperatures past a certain chassis limit (usually 60°C - 65°C). The OS will aggressively downclock your CPU frequency to keep the chassis cool. If your laptop gets "stuck" at 62°C, this program is working properly—it's simply hitting your manufacturer's hardcoded thermal ceiling.
+- **Maximum Temperature Limits:** Depending on your CPU and your cooling solution, you may not be able to reach extremely high temperatures (e.g., 90°C or 100°C). This software performs **controlled stress testing** by saturating 100% of your CPU threads and memory controllers. It does **not** overclock your CPU or bypass motherboard power limits. If you have a beefy desktop cooler or a custom loop, your maximum reachable temperature might only be 60°C under full synthetic load.
+
 > **HARDWARE DISCLAIMER: PLEASE READ CAREFULLY**
 >
-> **This tool intentionally generates heat by applying CPU stress using multiprocessing floating-point calculation loops.**
+> **This tool intentionally generates heat by applying massive memory thrashing and CPU stress using multiprocessing floating-point calculations.**
 > **While hardcoded safety failsafes (an absolute kill-switch at 90.0°C) and silent desktop notifications to warn the user are built in, you use this software entirely at your own risk. The authors assume no liability for hardware damage or instability resulting from its use.**
 
 ---
@@ -130,7 +134,7 @@ Configure Heat My Desktop to run headlessly in the background on boot:
 
 - **Check Service Status**:
   ```bash
-  systemctl --user status cpu-thermal-warmup.service
+  systemctl --user status heat-my-desktop.service
   ```
 
 - **Uninstall Service**:
