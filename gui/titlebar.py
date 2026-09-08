@@ -78,6 +78,12 @@ class CustomTitleBar(QWidget):
 
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
+            # Let the window manager handle the drag natively (Fixes Wayland dragging)
+            window = self.window().windowHandle()
+            if window and window.startSystemMove():
+                event.accept()
+                return
+                
             self._drag_pos = event.globalPosition().toPoint() - self._parent.frameGeometry().topLeft()
             event.accept()
 
