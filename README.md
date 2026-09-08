@@ -9,6 +9,12 @@ Heat My Desktop also allows you to run as a daemon on startup automatically.
 
 *Note: This software cannot cool your PC below room temperature.*
 
+Here is what the application looks like, along with the settings for the daemon installation:
+
+![Main App Interface](assets/README_IMAGE_1.jpg)
+
+![Settings and Daemon Installation](assets/README_SETTINGS_IMAGE_2.jpg)
+
 ---
 
 ### ⚠️ Important Limitations and Hardware Behavior
