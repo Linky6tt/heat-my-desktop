@@ -1,5 +1,5 @@
 # Heat My Desktop (HMD)
-**A controlled CPU warmer utility for Linux desktops.**
+**Heat My Desktop allows you to control your desktop's temperature, reaching a target temperature along a controlled curve. This is especially useful for preventing cold-boot crashes, fixing silicon thermal expansion instability, or running a controlled CPU stress test.**
 
 *This project was made with the help of AI.*
 
