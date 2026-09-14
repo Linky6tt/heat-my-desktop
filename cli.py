@@ -67,48 +67,58 @@ def run_headless_daemon(config: ThermalConfig) -> int:
         config.sensor_name or "Auto",
     )
 
-    monitor = TemperatureMonitor(preferred_sensor=config.sensor_name)
-    engine = ThermalEngine(config=config, monitor=monitor)
-
-    stop_requested = False
-
-    def handle_signal(signum, frame):
-        nonlocal stop_requested
-        logger.info("Received signal %d; shutting down engine...", signum)
-        stop_requested = True
-        engine.stop()
-
-    signal.signal(signal.SIGINT, handle_signal)
-    signal.signal(signal.SIGTERM, handle_signal)
+    last_log_time = 0.0
+    last_worker_count = -1
+    last_state = None
 
     def on_tick_log(status: ThermalStatus) -> None:
-        state_str = status.state.value
-        elapsed_str = f"{int(status.elapsed_seconds)}s/{status.total_duration_seconds}s"
-        logger.info(
-            "[%s] CPU: %5.1f°C | Expected: %5.1f°C | Target: %5.1f°C | Workers: %d/%d | Time: %s",
-            state_str,
-            status.current_temp_c,
-            status.expected_temp_c,
-            status.target_temp_c,
-            status.active_workers,
-            status.max_workers,
-            elapsed_str,
-        )
+        nonlocal last_log_time, last_worker_count, last_state
+        now = time.time()
+        if (
+            status.state != last_state
+            or status.active_workers != last_worker_count
+            or (now - last_log_time) >= 5.0
+        ):
+            last_log_time = now
+            last_worker_count = status.active_workers
+            last_state = status.state
+            state_str = status.state.value
+            elapsed_str = f"{int(status.elapsed_seconds)}s/{status.total_duration_seconds}s"
+            logger.info(
+                "[%s] CPU: %5.1f°C | Target: %5.1f°C | Workers: %d/%d | Time: %s | %s",
+                state_str,
+                status.current_temp_c,
+                status.target_temp_c,
+                status.active_workers,
+                status.max_workers,
+                elapsed_str,
+                status.message,
+            )
+
+    monitor = TemperatureMonitor(preferred_sensor=config.sensor_name)
+    engine = ThermalEngine(config=config, monitor=monitor, on_tick=on_tick_log)
 
     current_idle = monitor.read_cpu_temperature()
     if current_idle is not None and config.target_temp_c <= current_idle:
-        logger.info(
-            "CPU is already at or above target temperature (Target: %.1f°C <= Current: %.1f°C).",
-            config.target_temp_c,
-            current_idle,
-        )
-        from service.notify import notify_already_at_target
-        try:
-            notify_already_at_target(current_idle, config.target_temp_c)
-        except Exception:
-            pass
-        logger.info("Gracefully exiting.")
-        return 0
+        if not config.maintain_after_warmup:
+            logger.info(
+                "CPU is already at or above target temperature (Target: %.1f°C <= Current: %.1f°C).",
+                config.target_temp_c,
+                current_idle,
+            )
+            from service.notify import notify_already_at_target
+            try:
+                notify_already_at_target(current_idle, config.target_temp_c)
+            except Exception:
+                pass
+            logger.info("Gracefully exiting.")
+            return 0
+        else:
+            logger.info(
+                "CPU is already at or above target temperature (Target: %.1f°C <= Current: %.1f°C). Starting in maintain mode.",
+                config.target_temp_c,
+                current_idle,
+            )
 
     started = engine.start(config)
     if not started:
@@ -165,9 +175,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--maintain",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=None,
-        help="Maintain target temperature after warmup timeframe completes.",
+        help="Maintain target temperature after warmup timeframe completes (or use --no-maintain).",
     )
     parser.add_argument(
         "--sensor",

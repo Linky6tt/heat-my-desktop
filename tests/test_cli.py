@@ -35,6 +35,9 @@ class TestCLI(unittest.TestCase):
         self.assertTrue(args.maintain)
         self.assertEqual(args.sensor, "k10temp-pci-00c3::Tctl")
 
+        args_no_m = self.parser.parse_args(["--no-maintain"])
+        self.assertFalse(args_no_m.maintain)
+
     def test_service_flags(self):
         args = self.parser.parse_args(["--generate-service"])
         self.assertTrue(args.generate_service)

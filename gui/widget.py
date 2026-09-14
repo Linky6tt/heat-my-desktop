@@ -553,7 +553,7 @@ class ThermalWidget(QWidget):
 
             # Pre-check: if target temp <= current idle temperature
             current_temp = self.monitor.read_cpu_temperature()
-            if current_temp is not None and self.config.target_temp_c <= current_temp:
+            if current_temp is not None and self.config.target_temp_c <= current_temp and not self.config.maintain_after_warmup:
                 self.show_toast("CPU is already at or above target temperature")
                 from service.notify import notify_already_at_target
                 try:

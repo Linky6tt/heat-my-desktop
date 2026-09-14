@@ -30,6 +30,14 @@ class TestSystemdService(unittest.TestCase):
         self.assertIn("/usr/bin/python3 /opt/warmup/main.py --headless --target 65.0 --duration 600 --maintain", content)
         self.assertIn("WantedBy=default.target", content)
 
+        cfg_no_m = ThermalConfig(target_temp_c=65.0, duration_seconds=600, maintain_after_warmup=False)
+        content_no_m = generate_service_content(
+            config=cfg_no_m,
+            python_bin="/usr/bin/python3",
+            entrypoint_script=Path("/opt/warmup/main.py")
+        )
+        self.assertIn("--no-maintain", content_no_m)
+
     def test_install_and_uninstall_service(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             dest = Path(tmpdir)

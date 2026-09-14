@@ -41,7 +41,8 @@ Here is what the application looks like, along with the settings for the daemon 
 ## Key Highlights
 
 - **Smooth Curve Trajectory**: Calculates an expected target temperature curve over your specified timeframe instead of abruptly overheating the processor.
-- **Startup Daemon Integration**: Easily configure and run headlessly on system startup via systemd user services.
+- **Continuous Temperature Maintenance**: If temperature maintenance is enabled, the utility stays active in maintenance mode—even if your CPU is already at or above target temperature at boot—dynamically engaging workers whenever the temperature dips below the target.
+- **Startup Daemon Integration**: Easily configure and run headlessly on system startup via systemd user services. Automatically handles legacy service cleanups, restarts active units on settings update, and keeps temperature maintained across sessions.
 - **Modern GNOME Aesthetic**: Clean rounded frameless widget matching modern Adwaita Dark styling with a live pulsating heating indicator.
 - **Hardcoded 90.0°C Safety Kill-Switch**: Instantly terminates all worker processes if CPU temperature reaches 90°C.
 - **Silent Notifications**: Sends low-urgency desktop notifications on warmup start, completion, and safety cutoffs.
@@ -116,8 +117,14 @@ Execute warmups directly from the command line without opening a graphical windo
 
 - **Warmup and Maintain**:
   ```bash
-  # Warm up CPU to 60°C over 10 minutes and maintain it
+  # Warm up CPU to 60°C over 10 minutes and maintain it continuously
   python3 main.py --headless --target 60 --duration 600 --maintain
+  ```
+
+- **Warmup without Maintaining**:
+  ```bash
+  # Warm up CPU to 55°C and exit immediately once complete
+  python3 main.py --headless --target 55 --duration 300 --no-maintain
   ```
 
 - **Inspect Hardware Sensors**:
@@ -125,6 +132,8 @@ Execute warmups directly from the command line without opening a graphical windo
   # List all detected temperature sensors and show primary CPU sensor
   python3 main.py --status
   ```
+
+> **Note on Maintenance Mode**: When `--maintain` is enabled, the daemon stays running indefinitely to keep the CPU at or above the target temperature. If your CPU starts already warm (at or above target), it enters maintenance mode immediately and waits for the temperature to drop before engaging workers.
 
 ---
 
@@ -138,16 +147,17 @@ Configure Heat My Desktop to run headlessly in the background on boot:
   python3 main.py --enable-service
   ```
 
-- **Check Service Status**:
+- **Check Service Status and Logs**:
   ```bash
   systemctl --user status heat-my-desktop.service
+  journalctl --user -u heat-my-desktop.service -f
   ```
 
 - **Uninstall Service**:
   ```bash
   python3 main.py --uninstall-service
   ```
-*(You can also easily install and uninstall the service from the Settings cogwheel menu inside the GUI.)*
+*(You can also easily install, configure, enable, or uninstall the service directly from the Settings cogwheel menu inside the GUI. Updating and saving settings will automatically reconfigure and restart any active service.)*
 
 ---
 

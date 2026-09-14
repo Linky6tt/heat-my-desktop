@@ -106,14 +106,24 @@ class TestThermalEngine(unittest.TestCase):
         self.assertTrue(statuses[-1].failsafe_triggered)
 
     def test_start_aborts_if_already_at_or_above_target(self):
-        # Target is 40.0, current idle is 45.0
-        cfg = ThermalConfig(target_temp_c=40.0, duration_seconds=100)
+        # Target is 40.0, current idle is 45.0, maintain is False
+        cfg = ThermalConfig(target_temp_c=40.0, duration_seconds=100, maintain_after_warmup=False)
         self.monitor.mock_temp = 45.0
 
         started = self.engine.start(cfg)
         self.assertFalse(started)
         self.assertFalse(self.engine.is_running)
         self.assertEqual(self.generator.active_worker_count, 0)
+
+    def test_start_enters_maintaining_if_already_at_or_above_target_with_maintain(self):
+        # Target is 40.0, current idle is 45.0, maintain is True
+        cfg = ThermalConfig(target_temp_c=40.0, duration_seconds=100, maintain_after_warmup=True)
+        self.monitor.mock_temp = 45.0
+
+        started = self.engine.start(cfg)
+        self.assertTrue(started)
+        self.assertTrue(self.engine.is_running)
+        self.assertEqual(self.engine.state, EngineState.MAINTAINING)
 
     def test_extreme_mode_allows_temp_above_90c(self):
         # Configure extreme testing mode (95°C target, allow_extreme_temp=True)

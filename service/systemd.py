@@ -42,6 +42,8 @@ def generate_service_content(
     ]
     if config.maintain_after_warmup:
         args.append("--maintain")
+    else:
+        args.append("--no-maintain")
     if config.sensor_name:
         args.append(f"--sensor \"{config.sensor_name}\"")
 

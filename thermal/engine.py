@@ -138,16 +138,35 @@ class ThermalEngine:
 
             # Check if target temperature is already met by idle temperature
             if self.config.target_temp_c <= initial_temp:
-                logger.info(
-                    "CPU is already at or above target temperature (Target: %.1f°C <= Current: %.1f°C).",
-                    self.config.target_temp_c,
-                    initial_temp,
-                )
-                try:
-                    notify_already_at_target(initial_temp, self.config.target_temp_c)
-                except Exception as e:
-                    logger.debug("Failed to send notification: %s", e)
-                return False
+                if not self.config.maintain_after_warmup:
+                    logger.info(
+                        "CPU is already at or above target temperature (Target: %.1f°C <= Current: %.1f°C).",
+                        self.config.target_temp_c,
+                        initial_temp,
+                    )
+                    try:
+                        notify_already_at_target(initial_temp, self.config.target_temp_c)
+                    except Exception as e:
+                        logger.debug("Failed to send notification: %s", e)
+                    return False
+                else:
+                    logger.info(
+                        "CPU is already at or above target temperature (Target: %.1f°C <= Current: %.1f°C). Entering MAINTAINING state immediately.",
+                        self.config.target_temp_c,
+                        initial_temp,
+                    )
+                    self._start_temp_c = initial_temp
+                    self._start_time = time.time() - self.config.duration_seconds
+                    self._state = EngineState.MAINTAINING
+                    self._running = True
+
+                    self._thread = threading.Thread(target=self._control_loop, daemon=True)
+                    self._thread.start()
+                    try:
+                        notify_warmup_started(self.config.target_temp_c, self.config.duration_seconds, self.config.maintain_after_warmup)
+                    except Exception as e:
+                        logger.debug("Failed to send start notification: %s", e)
+                    return True
 
             self._start_temp_c = initial_temp
             self._start_time = time.time()
