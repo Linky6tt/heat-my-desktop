@@ -47,6 +47,28 @@ class TestSystemdService(unittest.TestCase):
             self.assertFalse(is_service_installed(destination_dir=dest))
             self.assertFalse(service_path.exists())
 
+    def test_legacy_service_cleanup_and_detection(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dest = Path(tmpdir)
+            legacy_file = dest / "cpu-thermal-warmup.service"
+            legacy_file.write_text("dummy legacy service")
+
+            self.assertTrue(is_service_installed(destination_dir=dest))
+
+            cfg = ThermalConfig(target_temp_c=50.0, duration_seconds=120, maintain_after_warmup=False)
+            service_path = install_user_service(cfg, destination_dir=dest)
+            self.assertEqual(service_path.name, SERVICE_UNIT_NAME)
+            self.assertTrue(service_path.exists())
+            self.assertFalse(legacy_file.exists())
+
+            legacy_file.write_text("dummy legacy service")
+            self.assertTrue(is_service_installed(destination_dir=dest))
+            ok, msg = uninstall_user_service(destination_dir=dest)
+            self.assertTrue(ok)
+            self.assertFalse(service_path.exists())
+            self.assertFalse(legacy_file.exists())
+            self.assertFalse(is_service_installed(destination_dir=dest))
+
 
 if __name__ == "__main__":
     unittest.main()

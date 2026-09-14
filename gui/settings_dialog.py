@@ -294,5 +294,11 @@ class SettingsDialog(QDialog):
     def _handle_save(self) -> None:
         cfg = self._get_current_input_config()
         cfg.save_to_file()
+        if is_service_installed():
+            was_enabled = is_service_enabled()
+            is_active, _ = get_service_status()
+            install_user_service(cfg)
+            if was_enabled or is_active:
+                enable_user_service()
         self.config_saved.emit(cfg)
         self.accept()
