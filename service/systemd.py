@@ -52,13 +52,14 @@ def generate_service_content(
     content = f"""[Unit]
 Description=CPU Thermal Controller and Warmup Headless Service
 Documentation=https://github.com/
-After=default.target
+After=basic.target
 
 [Service]
 Type=simple
 ExecStart={exec_start_cmd}
 Restart=on-failure
 RestartSec=5s
+RestartPreventExitStatus=2
 Environment=PYTHONUNBUFFERED=1
 
 [Install]

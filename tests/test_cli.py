@@ -58,6 +58,31 @@ class TestCLI(unittest.TestCase):
         self.assertFalse(check_target_reached(53.4, 55.0))
         self.assertFalse(check_target_reached(45.0, 30.0))
 
+    def test_run_headless_daemon_already_at_target_no_maintain(self):
+        from unittest.mock import patch
+        from cli import run_headless_daemon
+        from thermal.config import ThermalConfig
+
+        cfg = ThermalConfig(target_temp_c=40.0, duration_seconds=10, maintain_after_warmup=False)
+        with patch("thermal.monitor.TemperatureMonitor.read_cpu_temperature", return_value=50.0):
+            ret = run_headless_daemon(cfg)
+            self.assertEqual(ret, 0)
+
+    def test_run_headless_daemon_maintain_executes_loop(self):
+        from unittest.mock import PropertyMock, patch
+        from cli import run_headless_daemon
+        from thermal.config import ThermalConfig
+
+        cfg = ThermalConfig(target_temp_c=50.0, duration_seconds=10, maintain_after_warmup=True)
+        # Mock engine to simulate a running engine that stops after one iteration
+        with patch("thermal.monitor.TemperatureMonitor.read_cpu_temperature", return_value=55.0):
+            with patch("thermal.engine.ThermalEngine.start", return_value=True):
+                with patch("thermal.engine.ThermalEngine.is_running", new_callable=PropertyMock) as mock_running:
+                    mock_running.side_effect = [True, False]
+                    with patch("time.sleep", return_value=None):
+                        ret = run_headless_daemon(cfg)
+                        self.assertEqual(ret, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

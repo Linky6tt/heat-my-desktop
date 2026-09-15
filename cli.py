@@ -98,6 +98,17 @@ def run_headless_daemon(config: ThermalConfig) -> int:
     monitor = TemperatureMonitor(preferred_sensor=config.sensor_name)
     engine = ThermalEngine(config=config, monitor=monitor, on_tick=on_tick_log)
 
+    stop_requested = False
+
+    def handle_signal(signum, frame):
+        nonlocal stop_requested
+        logger.info("Received signal %d; shutting down engine...", signum)
+        stop_requested = True
+        engine.stop()
+
+    signal.signal(signal.SIGINT, handle_signal)
+    signal.signal(signal.SIGTERM, handle_signal)
+
     current_idle = monitor.read_cpu_temperature()
     if current_idle is not None and config.target_temp_c <= current_idle:
         if not config.maintain_after_warmup:
@@ -111,7 +122,7 @@ def run_headless_daemon(config: ThermalConfig) -> int:
                 notify_already_at_target(current_idle, config.target_temp_c)
             except Exception:
                 pass
-            logger.info("Gracefully exiting.")
+            logger.info("Exiting.")
             return 0
         else:
             logger.info(
