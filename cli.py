@@ -11,6 +11,7 @@ import time
 from typing import List, Optional
 
 from service.systemd import (
+    SingleInstanceLock,
     disable_user_service,
     enable_user_service,
     generate_service_content,
@@ -58,6 +59,14 @@ def run_headless_daemon(config: ThermalConfig) -> int:
     """
     Executes the thermal warmup and maintenance control loop headlessly.
     """
+    lock = SingleInstanceLock()
+    if not lock.acquire():
+        logger.warning(
+            "Another instance of heat-my-desktop is already running (locked). "
+            "Exiting to prevent temperature conflicts."
+        )
+        return 0
+
     logger.info("Starting Headless CPU Thermal Controller")
     logger.info(
         "Config: Target=%.1f°C, Duration=%ds, Maintain=%s, Sensor=%s",
@@ -143,6 +152,7 @@ def run_headless_daemon(config: ThermalConfig) -> int:
         logger.info("Interrupted by user.")
     finally:
         engine.stop()
+        lock.release()
 
     last_st = engine.last_status
     final_temp = last_st.current_temp_c if last_st else (monitor.read_cpu_temperature() or 40.0)
@@ -225,5 +235,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--disable-service",
         action="store_true",
         help="Disable and stop user systemd startup service.",
+    )
+    parser.add_argument(
+        "--kill-rogue",
+        action="store_true",
+        help="Kill rogue worker processes and stop conflicting thermal background services.",
     )
     return parser

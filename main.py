@@ -9,10 +9,12 @@ import sys
 
 from cli import build_parser, print_sensor_status, run_headless_daemon
 from service.systemd import (
+    configure_kde_session_exclusion,
     disable_user_service,
     enable_user_service,
     generate_service_content,
     install_user_service,
+    kill_rogue_processes,
     uninstall_user_service,
 )
 from thermal.config import ThermalConfig
@@ -74,6 +76,11 @@ def main() -> int:
         print(msg)
         return 0 if ok else 1
 
+    if getattr(args, "kill_rogue", False):
+        count = kill_rogue_processes()
+        print(f"Terminated {count} rogue process(es) and stopped conflicting services.")
+        return 0
+
     # 3. Headless Daemon Mode vs GUI Mode
     has_display = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
     if args.headless or not has_display:
@@ -83,16 +90,41 @@ def main() -> int:
 
     # 4. Launch PyQt6 GUI Application
     try:
+        from PyQt6.QtGui import QSessionManager
         from PyQt6.QtWidgets import QApplication
         from gui.style import get_icon
         from gui.widget import ThermalWidget
+
+        # Ensure KDE Plasma session restore excludes heat-my-desktop across reboots
+        configure_kde_session_exclusion()
 
         app = QApplication(sys.argv)
         app.setApplicationName("CPU Thermal Controller")
         app.setApplicationDisplayName("CPU Thermal Controller & Warmup")
         app.setWindowIcon(get_icon("flame", 64))
 
+        # Disable Qt session restoration so the app is not reopened on reboot/logout
+        app.setFallbackSessionManagementEnabled(False)
+
         widget = ThermalWidget(config=config)
+
+        def _handle_save_state(manager: QSessionManager) -> None:
+            try:
+                manager.setRestartHint(QSessionManager.RestartHint.RestartNever)
+            except Exception:
+                pass
+
+        def _handle_commit_data(manager: QSessionManager) -> None:
+            try:
+                if widget and hasattr(widget, "engine"):
+                    widget.engine.stop()
+                kill_rogue_processes(kill_current=False)
+            except Exception:
+                pass
+
+        app.saveStateRequest.connect(_handle_save_state)
+        app.commitDataRequest.connect(_handle_commit_data)
+
         widget.show()
 
         return app.exec()

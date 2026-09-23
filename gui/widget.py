@@ -551,6 +551,14 @@ class ThermalWidget(QWidget):
             self.config.target_temp_c = self.target_spin.value()
             self.config.maintain_after_warmup = self.maintain_toggle.isChecked()
 
+            # Pre-check: stop any background systemd service and clean orphan workers
+            from service.systemd import get_service_status, kill_rogue_processes, stop_user_service
+            is_active, _ = get_service_status()
+            if is_active:
+                stop_user_service()
+                self.show_toast("Stopped background service to prevent conflict")
+            kill_rogue_processes(kill_current=False)
+
             # Pre-check: if target temp <= current idle temperature
             current_temp = self.monitor.read_cpu_temperature()
             if current_temp is not None and self.config.target_temp_c <= current_temp and not self.config.maintain_after_warmup:

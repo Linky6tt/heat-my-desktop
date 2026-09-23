@@ -30,6 +30,7 @@ from service.systemd import (
     install_user_service,
     is_service_enabled,
     is_service_installed,
+    kill_rogue_processes,
     uninstall_user_service,
 )
 from thermal.config import ConfigConstraints, ThermalConfig
@@ -169,6 +170,11 @@ class SettingsDialog(QDialog):
         self.toggle_boot_btn.clicked.connect(self._handle_toggle_boot)
         sys_btn_layout.addWidget(self.toggle_boot_btn)
 
+        self.kill_rogue_btn = QPushButton("Clean Rogue Processes", sys_card)
+        self.kill_rogue_btn.setProperty("class", "SecondaryButton")
+        self.kill_rogue_btn.clicked.connect(self._handle_kill_rogue)
+        sys_btn_layout.addWidget(self.kill_rogue_btn)
+
         sys_layout.addLayout(sys_btn_layout)
 
         # Service Status Label
@@ -302,3 +308,12 @@ class SettingsDialog(QDialog):
                 enable_user_service()
         self.config_saved.emit(cfg)
         self.accept()
+
+    def _handle_kill_rogue(self) -> None:
+        count = kill_rogue_processes(kill_current=False)
+        QMessageBox.information(
+            self,
+            "Rogue Processes Cleaned",
+            f"Terminated {count} rogue process(es) and stopped any conflicting background services."
+        )
+        self._refresh_service_status()
