@@ -2,9 +2,11 @@
 Service package for system integration and startup daemon.
 """
 
+from .shutdown import SystemShutdownManager
 from .systemd import (
     SERVICE_UNIT_NAME,
     SingleInstanceLock,
+    cancel_systemd_config,
     configure_kde_session_exclusion,
     disable_user_service,
     enable_user_service,
@@ -21,6 +23,8 @@ from .systemd import (
 __all__ = [
     "SERVICE_UNIT_NAME",
     "SingleInstanceLock",
+    "SystemShutdownManager",
+    "cancel_systemd_config",
     "configure_kde_session_exclusion",
     "generate_service_content",
     "install_user_service",

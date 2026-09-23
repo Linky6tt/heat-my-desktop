@@ -363,6 +363,16 @@ def disable_user_service() -> Tuple[bool, str]:
     return True, f"Service {SERVICE_UNIT_NAME} disabled successfully."
 
 
+def cancel_systemd_config() -> Tuple[bool, str]:
+    """
+    Cancels any active or boot-enabled systemd service configuration.
+    Stops all thermal user services and disables them from starting on boot.
+    """
+    stop_ok, stop_msg = stop_user_service()
+    dis_ok, dis_msg = disable_user_service()
+    return (stop_ok and dis_ok), f"Stopped: {stop_msg}; Disabled: {dis_msg}"
+
+
 def is_service_installed(destination_dir: Optional[Path] = None) -> bool:
     """
     Checks if any systemd unit file (current or legacy) currently exists in the user service directory.

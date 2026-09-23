@@ -90,44 +90,41 @@ def main() -> int:
 
     # 4. Launch PyQt6 GUI Application
     try:
-        from PyQt6.QtGui import QSessionManager
         from PyQt6.QtWidgets import QApplication
         from gui.style import get_icon
         from gui.widget import ThermalWidget
+        from service.shutdown import SystemShutdownManager
+        from service.systemd import SingleInstanceLock
 
         # Ensure KDE Plasma session restore excludes heat-my-desktop across reboots
         configure_kde_session_exclusion()
+
+        lock = SingleInstanceLock()
+        if not lock.acquire():
+            print("Another instance of heat-my-desktop is already running.")
+            return 0
 
         app = QApplication(sys.argv)
         app.setApplicationName("CPU Thermal Controller")
         app.setApplicationDisplayName("CPU Thermal Controller & Warmup")
         app.setWindowIcon(get_icon("flame", 64))
 
-        # Disable Qt session restoration so the app is not reopened on reboot/logout
-        app.setFallbackSessionManagementEnabled(False)
-
         widget = ThermalWidget(config=config)
 
-        def _handle_save_state(manager: QSessionManager) -> None:
-            try:
-                manager.setRestartHint(QSessionManager.RestartHint.RestartNever)
-            except Exception:
-                pass
-
-        def _handle_commit_data(manager: QSessionManager) -> None:
-            try:
-                if widget and hasattr(widget, "engine"):
-                    widget.engine.stop()
-                kill_rogue_processes(kill_current=False)
-            except Exception:
-                pass
-
-        app.saveStateRequest.connect(_handle_save_state)
-        app.commitDataRequest.connect(_handle_commit_data)
+        # Multi-channel shutdown, restart, and systemd cancellation manager
+        shutdown_manager = SystemShutdownManager(
+            app=app,
+            widget=widget,
+            lock=lock,
+            cancel_systemd_on_shutdown=True,
+        )
+        shutdown_manager.register()
 
         widget.show()
 
-        return app.exec()
+        exit_code = app.exec()
+        shutdown_manager.cleanup()
+        return exit_code
     except ImportError as e:
         print(f"PyQt6 is required for GUI mode ({e}). Falling back to headless mode.", file=sys.stderr)
         return run_headless_daemon(config)

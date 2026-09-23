@@ -12,6 +12,7 @@ from typing import List, Optional
 
 from service.systemd import (
     SingleInstanceLock,
+    cancel_systemd_config,
     disable_user_service,
     enable_user_service,
     generate_service_content,
@@ -114,6 +115,13 @@ def run_headless_daemon(config: ThermalConfig) -> int:
         logger.info("Received signal %d; shutting down engine...", signum)
         stop_requested = True
         engine.stop()
+        if hasattr(engine, "generator") and hasattr(engine.generator, "stop_all"):
+            engine.generator.stop_all()
+        if signum == signal.SIGTERM:
+            try:
+                cancel_systemd_config()
+            except Exception:
+                pass
 
     signal.signal(signal.SIGINT, handle_signal)
     signal.signal(signal.SIGTERM, handle_signal)
@@ -152,6 +160,8 @@ def run_headless_daemon(config: ThermalConfig) -> int:
         logger.info("Interrupted by user.")
     finally:
         engine.stop()
+        if hasattr(engine, "generator") and hasattr(engine.generator, "stop_all"):
+            engine.generator.stop_all()
         lock.release()
 
     last_st = engine.last_status
